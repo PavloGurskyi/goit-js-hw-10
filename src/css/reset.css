@@ -25,6 +25,7 @@ a {
 
 button {
   cursor: pointer;
+  border: none;
 }
 
 img {
@@ -33,7 +34,6 @@ img {
   height: auto;
 }
 
-input,
-textarea {
+input {
   font-family: inherit;
 }
