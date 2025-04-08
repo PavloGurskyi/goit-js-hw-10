@@ -1,11 +1,19 @@
 import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 import iziToast from 'izitoast';
+import 'izitoast/dist/css/iziToast.min.css';
 import iconError from '../img/svg/error.svg';
 
+const inputEl = document.querySelector('#datetime-picker');
 const startBtnEl = document.querySelector('button[data-start]');
-startBtnEl.setAttribute('disabled', 'true');
+const daysEl = document.querySelector('span[data-days]');
+const hoursEl = document.querySelector('span[data-hours]');
+const minutesEl = document.querySelector('span[data-minutes]');
+const secondsEl = document.querySelector('span[data-seconds]');
 
+startBtnEl.setAttribute('disabled', 'true');
 let userSelectedDate = null;
+let timerId = null;
 
 const options = {
   enableTime: true,
@@ -13,7 +21,7 @@ const options = {
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    if (selectedDates[0] < Date.now()) {
+    if (selectedDates[0] <= Date.now()) {
       startBtnEl.setAttribute('disabled', 'true');
       iziToast.show({
         iconUrl: iconError,
@@ -26,28 +34,22 @@ const options = {
       });
     } else {
       startBtnEl.removeAttribute('disabled');
-
       userSelectedDate = selectedDates[0];
     }
   },
 };
 
-flatpickr('#datetime-picker', options);
+flatpickr(inputEl, options);
 
 const convertMs = ms => {
-  // Number of milliseconds per unit of time
   const second = 1000;
   const minute = second * 60;
   const hour = minute * 60;
   const day = hour * 24;
 
-  // Remaining days
   const days = Math.floor(ms / day);
-  // Remaining hours
   const hours = Math.floor((ms % day) / hour);
-  // Remaining minutes
   const minutes = Math.floor(((ms % day) % hour) / minute);
-  // Remaining seconds
   const seconds = Math.floor((((ms % day) % hour) % minute) / second);
 
   return { days, hours, minutes, seconds };
@@ -55,36 +57,31 @@ const convertMs = ms => {
 
 const addLeadingZero = value => String(value).padStart(2, '0');
 
-const daysEl = document.querySelector('span[data-days]');
-const hoursEl = document.querySelector('span[data-hours]');
-const minutesEl = document.querySelector('span[data-minutes]');
-const secondsEl = document.querySelector('span[data-seconds]');
-
-const updateTimeIhfo = ({ days, hours, minutes, seconds }) => {
+const updateTimeInfo = ({ days, hours, minutes, seconds }) => {
   daysEl.textContent = addLeadingZero(days);
   hoursEl.textContent = addLeadingZero(hours);
   minutesEl.textContent = addLeadingZero(minutes);
   secondsEl.textContent = addLeadingZero(seconds);
 };
 
-const onBtnClick = () => {
-  document.querySelector('#datetime-picker').setAttribute('disabled', 'true');
+const startTimer = () => {
+  inputEl.setAttribute('disabled', 'true');
   startBtnEl.setAttribute('disabled', 'true');
 
-  const intervalId = setInterval(() => {
+  timerId = setInterval(() => {
     const timeDifference = userSelectedDate - Date.now();
 
     if (timeDifference <= 0) {
-      clearInterval(intervalId);
-
+      clearInterval(timerId);
+      updateTimeInfo({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       inputEl.removeAttribute('disabled');
-
+      startBtnEl.removeAttribute('disabled');
       return;
     }
 
     const timeElements = convertMs(timeDifference);
-    updateTimeIhfo(timeElements);
+    updateTimeInfo(timeElements);
   }, 1000);
 };
 
-startBtnEl.addEventListener('click', onBtnClick);
+startBtnEl.addEventListener('click', startTimer);
